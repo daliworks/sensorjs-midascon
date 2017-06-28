@@ -8,6 +8,13 @@ var util = require('util');
 var _ = require('lodash');
 var logger = Network.getLogger();
 
+function refineDeviceId(deviceId) {
+  deviceId = deviceId.replace(/[-:]/g, '').trim().toLowerCase();
+  deviceId = deviceId.substring(0, 12);
+
+  return deviceId;
+}
+
 function BLEMidascon(options) {
   Network.call(this, 'ble-midascon', options);
 }
@@ -25,21 +32,29 @@ BLEMidascon.prototype.discover = function(networkName, options, cb) {
   }
 
   discovered = midascon.discover();
-  _.forEach(discovered, function (deviceId) {
+  _.forEach(discovered, function (values, macAddress) {
+    var deviceId = refineDeviceId(macAddress);
     var sensors = [
       {
         id: [deviceId, 'temperature'].join('-'),
         type: 'temperature',
-        name: 'Temperature'
+        model: 'midasconTemp',
+        options: {
+          name: 'Temperature'
+        }
       },
       {
         id: [deviceId, 'humidity'].join('-'),
         type: 'humidity',
-        name: 'Humidity'
+        model: 'midasconHumi',
+        options: {
+          name: 'Humidity'
+        }
       }
     ];
 
-    // TODO: Should check whether device model ID must be found dynamically
+    // TODO: Should check whether device model ID must be found dynamically.
+    //       Other sensorjs-xxx has the routine which emit 'discovered' and 'done' events.
     devices.push(new Device(self, deviceId, 'midascon', sensors));
   });
 

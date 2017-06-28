@@ -1,6 +1,7 @@
 'use strict';
 
 var noble = require('noble');
+var _ = require('lodash');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var logger = require('./index').Sensor.getLogger('Sensor');
@@ -15,13 +16,23 @@ var logger = require('./index').Sensor.getLogger('Sensor');
 // }
 var deviceMap = {};
 
+function refineMacAddress(macAddress) {
+  if (_.isString(macAddress)) {
+    macAddress = macAddress.replace(/[-:]/g, '').trim().toLowerCase().substring(0, 12);
+  } else {
+    logger.warn('BLE MAC address is not a string:', macAddress);
+  }
+
+  return macAddress;
+}
+
 function onDiscover(peripheral) {
   var name = peripheral.advertisement.localName;
   var data = peripheral.advertisement.manufacturerData;
-  var address = peripheral.address;
+  var address = refineMacAddress(peripheral.address);
   var temperature;
   var humidity;
-  var time = new Date().getValue();
+  var time = new Date().getTime();
 
   if (name && name.indexOf('MIDASCON') === 0) {
 
@@ -46,6 +57,7 @@ function Midascon() {
 
   noble.on('stateChange', function (state) {
     if (state === 'poweredOn') {
+      logger.debug('BLE is powered on.');
       noble.startScanning(null, true);
     } else {
       noble.stop.Scanning();

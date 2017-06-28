@@ -43,14 +43,14 @@ util.inherits(MidasconSensor, Sensor);
 
 MidasconSensor.prototype._get = function (cb) {
   var self = this;
+  var value = midascon.getValue(self.device.address, self.dataType);
+  var time = midascon.getTime(self.device.address);
   var result = {
     status: 'on',
     id: self.id,
     result: {},
     time: {}
   };
-  var value = midascon.getValue(self.deviceId, self.dataType);
-  var time = midascon.getTime(self.device.address);
 
   logger.debug(self.dataType + ':', value, '(' + new Date(time).toLocaleString() + ')');
 
